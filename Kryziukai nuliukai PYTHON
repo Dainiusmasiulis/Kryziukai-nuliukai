@@ -19,7 +19,7 @@ labirintas = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
     [1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
     [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -44,6 +44,9 @@ font_small = pygame.font.Font(None, 36)
 
 # Pradžioje žaidimas aktyvus
 game_active = True
+
+# Clock objektas žaidimo greičiui kontroliuoti
+clock = pygame.time.Clock()
 
 # Pagrindinis žaidimo ciklas
 while game_active:
@@ -81,6 +84,7 @@ while game_active:
             player_rect.y -= player_step
         if keys[pygame.K_DOWN] and labirintas[player_rect.bottom // 80][player_rect.left // 80] == 0:
             player_rect.y += player_step
+
         # Užpildomas ekranas juoda spalva
         screen.fill(black)
         # Braižomas labirintas
@@ -94,6 +98,9 @@ while game_active:
         pygame.draw.rect(screen, red, (finish_pos[1] * 80, finish_pos[0] * 80, 80, 80))
         # Į ekraną dedamas žaidėjas
         screen.blit(player_image, player_rect)
+
     # Atnaujinamas ekranas
     pygame.display.update()
 
+    # Kontroliuojamas žaidimo greitis
+    clock.tick(100)  # 60 kadrai per sekundę
