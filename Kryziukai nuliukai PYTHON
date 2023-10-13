@@ -1,50 +1,99 @@
-def print_board(board):
-    for row in board:
-        print(' '.join(row))
+import pygame
+import sys
 
-def check_win(board, player):
-    for row in board:
-        if all(symbol == player for symbol in row):
-            return True
-    for col in range(3):
-        if all(board[row][col] == player for row in range(3)):
-            return True
-    if all(board[i][i] == player for i in range(3)) or all(board[i][2 - i] == player for i in range(3)):
-        return True
-    return False
+pygame.init()
 
-def is_draw(board):
-    return all(symbol != ' ' for row in board for symbol in row)
+# Nustatomi ekrano plotis ir aukštis
+screen_width, screen_height = 800, 800
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Labirintas")
 
-def player_move(board, player):
-    while True:
-        print_board(board)
-        print(f"Žaidejo {player}, eilė.")
-        row = int(input("Iveskite eilute (1-3): ")) - 1
-        col = int(input("Iveskite žingsni (1-3): ")) - 1
-        if 0 <= row < 3 and 0 <= col < 3 and board[row][col] == ' ':
-            return row, col
-        print("Klaidingas ejimas. Bandykite dar karta.")
+# Nustatomos spalvos RGB formatu
+black = (0, 0, 0)
+white = (255, 255, 255)
+red = (255, 0, 0)
+green = (0, 255, 0)
 
-def main():
-    board = [[' ' for _ in range(3)] for _ in range(3)]
-    players = ['X', 'O']
-    current_player = players[0]
+# Sukuriamas labirintas
+labirintas = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
+    [1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+]
 
-    while True:
-        row, col = player_move(board, current_player)
-        board[row][col] = current_player
+# Nustatomi pradžios ir pabaigos taškai
+start_pos = (1, 1)
+finish_pos = (len(labirintas) - 2, len(labirintas[0]) - 2)
 
-        if check_win(board, current_player):
-            print_board(board)
-            print(f"Žaidejas {current_player} laimėjo!")
-            break
-        elif is_draw(board):
-            print_board(board)
-            print("Lygiosios!")
-            break
+# Užkraunamas žaidėjo paveikslėlis
+player_image = pygame.image.load("player.png")
+player_rect = player_image.get_rect()
+player_rect.topleft = (start_pos[1] * 80, start_pos[0] * 80)
 
-        current_player = players[(players.index(current_player) + 1) % 2]
+# Nustatomi žaidėjo greitis ir žingsnio dydis
+player_speed = 1
+player_step = 1
 
-if __name__ == "__main__":
-    main()
+# Sukuriamos šriftai teksto išvedimui
+font_large = pygame.font.Font(None, 72)
+font_small = pygame.font.Font(None, 36)
+
+# Pradžioje žaidimas aktyvus
+game_active = True
+
+# Pagrindinis žaidimo ciklas
+while game_active:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    keys = pygame.key.get_pressed()
+    # Tikrinama, ar žaidėjas pasiekė finišą
+    if player_rect.colliderect(pygame.Rect(finish_pos[1] * 80, finish_pos[0] * 80, 80, 80)):
+        text_color = green
+        # Išvedamas didelis tekstas "FINIŠAS!!!"
+        text = font_large.render("FINIŠAS!!!", True, text_color)
+        text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 - text.get_height()))
+        screen.blit(text, text_rect)
+        # Išvedamas mažas tekstas "Paspauskite 'Y' jei žaisite dar kartą, 'N' išeiti."
+        text = font_small.render("Paspauskite 'Y' jei žaisite dar kartą, 'N' išeiti.", True, text_color)
+        text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 + text.get_height()))
+        screen.blit(text, text_rect)
+        # Jei paspausta 'Y', žaidėjas perkraunamas į pradinę poziciją
+        if keys[pygame.K_y]:
+            player_rect.topleft = (start_pos[1] * 80, start_pos[0] * 80)
+        # Jei paspausta 'N', žaidimas nutraukiamas
+        elif keys[pygame.K_n]:
+            game_active = False
+
+    else:
+        # Tikrinama žaidėjo įvestis ir judama atitinkamai
+        if keys[pygame.K_LEFT] and labirintas[player_rect.top // 80][player_rect.left // 80] == 0:
+            player_rect.x -= player_step
+        if keys[pygame.K_RIGHT] and labirintas[player_rect.top // 80][player_rect.right // 80] == 0:
+            player_rect.x += player_step
+        if keys[pygame.K_UP] and labirintas[player_rect.top // 80][player_rect.left // 80] == 0:
+            player_rect.y -= player_step
+        if keys[pygame.K_DOWN] and labirintas[player_rect.bottom // 80][player_rect.left // 80] == 0:
+            player_rect.y += player_step
+        # Užpildomas ekranas juoda spalva
+        screen.fill(black)
+        # Braižomas labirintas
+        for row in range(len(labirintas)):
+            for col in range(len(labirintas[row])):
+                if labirintas[row][col] == 1:
+                    pygame.draw.rect(screen, white, (col * 80, row * 80, 80, 80))
+                elif labirintas[row][col] == 0:
+                    pygame.draw.rect(screen, black, (col * 80, row * 80, 80, 80))
+        # Braižomas pabaigos taškas raudona spalva
+        pygame.draw.rect(screen, red, (finish_pos[1] * 80, finish_pos[0] * 80, 80, 80))
+        # Į ekraną dedamas žaidėjas
+        screen.blit(player_image, player_rect)
+    # Atnaujinamas ekranas
+    pygame.display.update()
+
